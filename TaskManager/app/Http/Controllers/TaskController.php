@@ -10,15 +10,15 @@ class TaskController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth'); 
+        $this->middleware('auth');
     }
 
     public function index()
     {
-        $tasks = Auth::user()->tasks;
+        $tasks = Auth::user()->tasks()->orderBy('created_at', 'desc')->get();
         return view('tasks.index', compact('tasks'));
     }
-    
+
     public function create()
     {
         return view('tasks.create');
@@ -42,17 +42,13 @@ class TaskController extends Controller
 
     public function edit(Task $task)
     {
-        if ($task->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizeTaskAccess($task);
         return view('tasks.edit', compact('task'));
     }
 
     public function update(Request $request, Task $task)
     {
-        if ($task->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizeTaskAccess($task);
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -69,9 +65,7 @@ class TaskController extends Controller
 
     public function complete(Task $task)
     {
-        if ($task->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizeTaskAccess($task);
 
         $task->update(['is_completed' => true]);
 
@@ -80,11 +74,16 @@ class TaskController extends Controller
 
     public function destroy(Task $task)
     {
-        if ($task->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizeTaskAccess($task);
 
         $task->delete();
         return redirect()->route('tasks.index')->with('success', 'Task silindi.');
+    }
+
+    private function authorizeTaskAccess(Task $task)
+    {
+        if ($task->user_id !== Auth::id()) {
+            abort(403, 'Bu göreve erişim izniniz yok.');
+        }
     }
 }

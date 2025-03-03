@@ -2,7 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\Auth\LoginController;
+use Illuminate\Support\Facades\Auth;
 
+Route::get('/', function () {
+    return redirect('/tasks');
+});
+
+// 🟢 Kullanıcı girişi zorunlu olan grup (middleware ile koruma)
 Route::middleware(['auth'])->group(function () {
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
@@ -13,14 +20,12 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 });
 
-Route::view('/', 'welcome');
+// 🟢 Laravel Breeze veya Jetstream kullanıyorsan auth route'larını ekle
+Auth::routes();
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// 🟢 Giriş yapma ve çıkış yapma işlemleri
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::view('profile', 'profile')
-    ->middleware(['auth'])
-    ->name('profile');
+Auth::routes();
 
-require __DIR__.'/auth.php';
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
